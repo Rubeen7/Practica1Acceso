@@ -14,6 +14,7 @@ public class BackupCompletoUI implements OpcionBackup {
 
     @Override
     public void ejecutar() throws IOException {
+        // Pedimos que se haga la copia completa y mostramos dónde se ha guardado
         int cantidad = backup.crearCompleto();
         mostrarResultado(backup.getCarpetaCreada(), cantidad);
     }

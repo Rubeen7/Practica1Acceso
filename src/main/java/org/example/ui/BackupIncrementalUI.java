@@ -14,6 +14,7 @@ public class BackupIncrementalUI implements OpcionBackup {
 
     @Override
     public void ejecutar() throws IOException {
+        // Pedimos que se copien los cambios y mostramos el resultado
         int cantidad = backup.crearIncremental();
         mostrarResultado(backup.getCarpetaCreada(), cantidad);
     }

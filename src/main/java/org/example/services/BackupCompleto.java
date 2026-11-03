@@ -9,8 +9,8 @@ import java.time.format.DateTimeFormatter;
 
 public class BackupCompleto {
 
-    private static final DateTimeFormatter FORMATO =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSSSSSSSS");
+    // Ponemos la fecha en el nombre para saber cuándo se hizo cada copia
+    private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private final File origen;
     private final File backups;
@@ -24,10 +24,11 @@ public class BackupCompleto {
     public int crearCompleto() throws IOException {
         Comprobaciones.prepararCarpetas(origen, backups);
 
+        // En esta carpeta guardamos la copia completa y luego las copias de los cambios
         File grupo = nuevaCarpeta(backups, "backup_");
         File completo = new File(grupo, "completo");
 
-        // null indica que se copian todos los archivos, sin comparar
+        // Pasamos null porque queremos copiarlo todo, sin comparar con otra copia
         int cantidad = copiarCarpeta(origen, completo, "", null);
         File terminado = terminarCopia(grupo);
 
@@ -39,7 +40,7 @@ public class BackupCompleto {
         return carpetaCreada;
     }
 
-    // Los dos tipos de backup utilizan estas operaciones de copia
+    // Usamos este método para copiar archivos en los dos tipos de backup
     public static int copiarCarpeta(File actual, File destino, String ruta, File completo)
             throws IOException {
 
@@ -56,13 +57,14 @@ public class BackupCompleto {
 
         for (int i = 0; i < archivos.length; i++) {
             File archivo = archivos[i];
+            // Recordamos en qué carpeta está el archivo para buscarlo en la copia completa
             String rutaArchivo = ruta + archivo.getName();
             File copia = new File(destino, archivo.getName());
 
             if (Files.isSymbolicLink(archivo.toPath())) {
                 throw new IOException("No se admiten enlaces simbólicos: " + archivo);
             } else if (archivo.isDirectory()) {
-                // Para una subcarpeta, repetimos este método con esa carpeta
+                // Si encontramos otra carpeta dentro, copiamos también su contenido
                 cantidad += copiarCarpeta(archivo, copia, rutaArchivo + "/", completo);
             } else if (archivo.isFile()) {
                 if (Comprobaciones.necesitaCopia(archivo, rutaArchivo, completo)) {
@@ -70,11 +72,8 @@ public class BackupCompleto {
                         Comprobaciones.crearCarpeta(destino);
                         carpetaCreada = true;
                     }
-                    Files.copy(
-                            archivo.toPath(),
-                            copia.toPath(),
-                            StandardCopyOption.COPY_ATTRIBUTES
-                    );
+                    // Conservamos también la fecha del archivo para poder compararla después
+                    Files.copy(archivo.toPath(), copia.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
                     cantidad++;
                 }
             } else {
@@ -87,6 +86,7 @@ public class BackupCompleto {
 
     public static File nuevaCarpeta(File padre, String prefijo) throws IOException {
         String fecha = LocalDateTime.now().format(FORMATO);
+        // Añadimos .pendiente al nombre para saber que la copia aún no ha terminado
         File carpeta = new File(padre, prefijo + fecha + ".pendiente");
 
         if (!carpeta.mkdir()) {

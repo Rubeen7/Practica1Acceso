@@ -2,10 +2,12 @@ package org.example.services;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 // Comprueba los archivos y prepara las carpetas necesarias
 public class Comprobaciones {
 
+    // Estas comprobaciones se usan directamente, sin crear un objeto de esta clase
     private Comprobaciones() {
     }
 
@@ -23,6 +25,7 @@ public class Comprobaciones {
             File carpeta = carpetas[i];
             File completo = new File(carpeta, "completo");
 
+            // Solo tenemos en cuenta las copias completas que hayan terminado
             if (carpeta.getName().startsWith("backup_") && !carpeta.getName().endsWith(".pendiente") && completo.isDirectory()) {
 
                 // La fecha del nombre permite saber cuál es el más reciente
@@ -34,20 +37,23 @@ public class Comprobaciones {
         return ultimo;
     }
 
-    public static boolean necesitaCopia(File archivo, String ruta, File completo) {
+    public static boolean necesitaCopia(File archivo, String ruta, File completo) throws IOException {
         if (completo == null) {
             return true;
         }
+        // Buscamos el mismo archivo dentro de la copia completa
         File guardado = new File(completo, ruta);
         if (!guardado.isFile()) {
             return true; // Es un archivo nuevo
         }
-        // Se copia si se ha modificado después de la copia completa
-        return archivo.lastModified() > guardado.lastModified();
+        // Comparamos lo que contiene el archivo con lo que guardamos en el completo.
+        // Si devuelve -1 son iguales; cualquier otro resultado indica un cambio.
+        return Files.mismatch(archivo.toPath(), guardado.toPath()) != -1;
     }
 
     public static File[] listarArchivos(File carpeta) throws IOException {
         File[] archivos = carpeta.listFiles();
+        // Si no podemos leer la carpeta, avisamos del problema
         if (archivos == null) {
             throw new IOException("No se pudo leer la carpeta: " + carpeta);
         }
@@ -60,6 +66,7 @@ public class Comprobaciones {
     }
 
     public static void crearCarpeta(File carpeta) throws IOException {
+        // Creamos esta carpeta y las que hagan falta para llegar hasta ella
         if (!carpeta.isDirectory() && !carpeta.mkdirs()) {
             throw new IOException("No se pudo crear la carpeta: " + carpeta);
         }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class Menu {
+    // El menú puede llamar a las dos opciones de la misma manera
     private final OpcionBackup backupCompleto;
     private final OpcionBackup backupIncremental;
 
@@ -19,6 +20,7 @@ public class Menu {
 
         while (!opcion.equals("0")) {
             mostrarMenu();
+            // Quitamos los espacios sobrantes y salimos si no hay más líneas para leer
             opcion = teclado.hasNextLine() ? teclado.nextLine().trim() : "0";
 
             try {
@@ -29,6 +31,7 @@ public class Menu {
                     default -> System.out.println("Opción incorrecta. Introduce 0, 1 o 2.");
                 }
             } catch (IOException e) {
+                // Mostramos el error y permitimos elegir otra opción
                 System.out.println("No se pudo crear el backup: " + e.getMessage());
             }
         }
